@@ -6,12 +6,9 @@ int state = 0;
 int flag=0;
 
 
-  SoftwareSerial myConnection(10,11);
-  
-  
-  
-  
-  // the delay between each screen display (ms)
+SoftwareSerial myConnection(10,11);
+
+// the delay between each screen display (ms)
 int SpeedDelay = 12;
 
 
@@ -23,8 +20,8 @@ char incomingByte; //incoming data from the BT link
 
 
 // the two pixels arrays
-char Buffer[200];   //contient tout les pixels de TOUTE LA PHRASE
-char Buffer_inverse[200]; //contient tout les pixels de TOUTE LA PHRASE, mais symetrises pour affichage sur ecran inverses
+char Buffer[200];   
+char Buffer_inverse[200]; 
 
 // the message array
 char Command[50];
