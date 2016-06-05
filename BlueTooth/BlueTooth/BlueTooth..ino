@@ -36,7 +36,14 @@ void setup() {
 }
 
 void loop() {
+  long measurement = GetVibrationMeasurement();
   
+  if (measurement >0){
+      String message = "VIB: ";
+      String fullMessage = message + measurement;
+        Serial.println(fullMessage);
+        myConnection.println(fullMessage);
+  }
   
     if (myConnection.available() > 0) {
         //myConnection.println("Connection is avail");
@@ -70,4 +77,9 @@ void loop() {
         myConnection.println("Command Recieved");
         
     }
+}
+
+long GetVibrationMeasurement(){
+  long measurement = pulseIn (8,HIGH);
+  return measurement;
 }
