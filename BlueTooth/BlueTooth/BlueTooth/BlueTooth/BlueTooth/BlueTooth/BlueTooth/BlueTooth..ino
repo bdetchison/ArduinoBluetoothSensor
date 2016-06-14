@@ -1,6 +1,5 @@
 
-  #include <SoftwareSerial.h>
-
+#include <SoftwareSerial.h>
 
 SoftwareSerial myConnection(10,11);
 
@@ -12,6 +11,22 @@ boolean micro_is_5V = true; // Set to true if using a 5V microcontroller such as
 int messageLength=25;
 boolean ledIsOn = false;
 
+
+// Accelerometer calibrate
+const int XPin = A0;
+const int YPin = A1;
+const int ZPin = A2;
+
+// Raw analog values for -1g and +1g.  Position carefully and look for min and max values.
+// These are from an accelerometer running on 3.3V measured agains a 5V analog reference.
+// You would expect (3.3V/2-0.33V)*1024/5V = 270 for -1g and (3.3V/2+0.33V)*1024/5V = 405 for +1g.
+// As you can see, my accelerometer does not match the nominal values.
+const int XMin = 422;
+const int XMax = 655;
+const int YMin = 452;
+const int YMax = 657;
+const int ZMin = 452;
+const int ZMax = 656;
 
 char incomingByte; //incoming data from the BT link
 
@@ -28,16 +43,16 @@ void setup() {
   Serial.begin(9600);
   myConnection.begin(9600);
   
+  analogReference(EXTERNAL);
+  
   pinMode(13, OUTPUT);
+ // pinMode(A0, INPUT);
+ // pinMode(A1, INPUT);
+ // pinMode(A2, INPUT);
   digitalWrite(13, LOW);
 }
 
 void loop() {
-    if (ledIsOn){
-      String measurement = GetVibrationMeasurement();
-      SendVibrationData(measurement);
-    }
-  
     if (myConnection.available() > 0) {
         //myConnection.println("Connection is avail");
         messageLength = myConnection.available(); //incoming string lenght
@@ -70,6 +85,12 @@ void loop() {
           myConnection.println("Done");
         }
     }
+    
+     if (ledIsOn){
+      String measurement = GetVibrationMeasurement();
+      SendVibrationData(measurement);
+      delay(500);
+    }
 }
 
 void SendVibrationData(String data){
@@ -80,47 +101,49 @@ void SendVibrationData(String data){
 }
 
 String GetVibrationMeasurement(){
-  // Get raw accelerometer data for each axis
-  int rawX = analogRead(A0);
-  int rawY = analogRead(A1);
-  int rawZ = analogRead(A2);
+  unsigned long XSum = 0;
+  unsigned long YSum = 0;
+  unsigned long ZSum = 0;
   
-    //zero_G is the reading we expect from the sensor when it detects
-  //no acceleration.  Subtract this value from the sensor reading to
-  //get a shifted sensor reading.
-  float zero_G = 512.0; 
-
-  //scale is the number of units we expect the sensor reading to
-  //change when the acceleration along an axis changes by 1G.
-  //Divide the shifted sensor reading by scale to get acceleration in Gs.
-  float scale = 106; 
- 
-  float scaledX = ((float)rawX - zero_G)/scale;
-  Serial.print(scaledX);
-  Serial.print("\t");
+  Serial.print("X raw=");
+  Serial.print(analogRead(XPin));
+  Serial.print("Y raw=");
+  Serial.print(analogRead(YPin));
+  Serial.print("Z raw=");
+  Serial.print(analogRead(ZPin));
   
-  float scaledY = ((float)rawY - zero_G)/scale;
-  Serial.print(scaledY);
-  Serial.print("\t");
+  for (int i=0; i<100; i++) {
+    XSum += analogRead(XPin);
+    YSum += analogRead(YPin);
+    ZSum += analogRead(ZPin);
+  }
   
-  float scaledZ = ((float)rawZ - zero_G)/scale;
-  Serial.print(scaledZ);
-  Serial.print("\n");
-  
-  
-  char temp[10];
   String scaledXasString;
   String scaledYasString;
   String scaledZasString;
   
-  dtostrf(scaledX,1,4,temp);
+  char temp[10];
+  float scaledX = map(XSum/100, XMin, XMax, -1000, 1000);
+  float scaledY = map(YSum/100, YMin, YMax, -1000, 1000);
+  float scaledZ = map(ZSum/100, ZMin, ZMax, -1000, 1000);
+  
+  dtostrf(scaledX / 1000,1,4,temp);
   scaledXasString = String(temp);
  
-  dtostrf(scaledY,1,4,temp);
+  dtostrf(scaledY / 1000,1,4,temp);
   scaledYasString = String(temp);
  
-  dtostrf(scaledZ,1,4,temp);
+  dtostrf(scaledZ / 1000,1,4,temp);
   scaledZasString = String(temp); 
+  
+  Serial.print("X=");
+  Serial.print(scaledXasString);
+    
+  Serial.print(", Y=");
+  Serial.print(scaledYasString);
+
+  Serial.print(", Z=");
+  Serial.println(scaledZasString);
   
   return scaledXasString + ":" + scaledYasString + ":" + scaledZasString;
 }
