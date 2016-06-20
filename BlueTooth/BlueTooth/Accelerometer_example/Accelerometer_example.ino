@@ -16,7 +16,7 @@ Distributed as-is; no warranty is given.
 
 // Make sure these two variables are correct for your setup
 int scale = 3; // 3 (±3g) for ADXL337, 200 (±200g) for ADXL377
-boolean micro_is_5V = true; // Set to true if using a 5V microcontroller such as the Arduino Uno, false if using a 3.3V microcontroller, this affects the interpretation of the sensor data
+boolean micro_is_5V = false; // Set to true if using a 5V microcontroller such as the Arduino Uno, false if using a 3.3V microcontroller, this affects the interpretation of the sensor data
 
 void setup()
 {

@@ -21,12 +21,12 @@ const int ZPin = A2;
 // These are from an accelerometer running on 3.3V measured agains a 5V analog reference.
 // You would expect (3.3V/2-0.33V)*1024/5V = 270 for -1g and (3.3V/2+0.33V)*1024/5V = 405 for +1g.
 // As you can see, my accelerometer does not match the nominal values.
-const int XMin = 422;
-const int XMax = 655;
-const int YMin = 452;
-const int YMax = 657;
-const int ZMin = 452;
-const int ZMax = 656;
+const int XMin = 406;
+const int XMax = 618;
+const int YMin = 393;
+const int YMax = 603;
+const int ZMin = 413;
+const int ZMax = 620;
 
 char incomingByte; //incoming data from the BT link
 
@@ -86,7 +86,7 @@ void loop() {
         }
     }
     
-     if (ledIsOn){
+    if (ledIsOn){
       String measurement = GetVibrationMeasurement();
       SendVibrationData(measurement);
       delay(500);
@@ -110,7 +110,7 @@ String GetVibrationMeasurement(){
   Serial.print("Y raw=");
   Serial.print(analogRead(YPin));
   Serial.print("Z raw=");
-  Serial.print(analogRead(ZPin));
+  Serial.println(analogRead(ZPin));
   
   for (int i=0; i<100; i++) {
     XSum += analogRead(XPin);
@@ -118,22 +118,39 @@ String GetVibrationMeasurement(){
     ZSum += analogRead(ZPin);
   }
   
+  long voltsX = (((XSum/100) *3.3/1023)-1.65)/.308;
+  long voltsY = (((YSum/100) *3.3/1023)-1.65)/.311;
+  long voltsZ = (((ZSum/100) *3.3/1023)-1.65)/.305;
+  
+  Serial.print("Volts X=");
+  Serial.print(voltsX);
+    
+  Serial.print(", Y=");
+  Serial.print(voltsY);
+
+  Serial.print(", Z=");
+  Serial.println(voltsZ);
+  
+  
+  
+  
+  
   String scaledXasString;
   String scaledYasString;
   String scaledZasString;
   
-  char temp[10];
-  float scaledX = map(XSum/100, XMin, XMax, -1000, 1000);
-  float scaledY = map(YSum/100, YMin, YMax, -1000, 1000);
-  float scaledZ = map(ZSum/100, ZMin, ZMax, -1000, 1000);
+  char temp[20];
+  float scaledX = mapf(XSum/100, XMin, XMax, -1000, 1000);
+  float scaledY = mapf(YSum/100, YMin, YMax, -1000, 1000);
+  float scaledZ = mapf(ZSum/100, ZMin, ZMax, -1000, 1000);
   
-  dtostrf(scaledX / 1000,1,4,temp);
+  dtostrf(scaledX/1000,10,8,temp);
   scaledXasString = String(temp);
  
-  dtostrf(scaledY / 1000,1,4,temp);
+  dtostrf(scaledY/1000,10,8,temp);
   scaledYasString = String(temp);
  
-  dtostrf(scaledZ / 1000,1,4,temp);
+  dtostrf(scaledZ/1000,10,8,temp);
   scaledZasString = String(temp); 
   
   Serial.print("X=");
@@ -146,4 +163,10 @@ String GetVibrationMeasurement(){
   Serial.println(scaledZasString);
   
   return scaledXasString + ":" + scaledYasString + ":" + scaledZasString;
+}
+
+// Same functionality as Arduino's standard map function, except using floats
+float mapf(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
